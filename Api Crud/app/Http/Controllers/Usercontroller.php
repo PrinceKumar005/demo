@@ -24,11 +24,18 @@ class Usercontroller extends Controller
         $page = $request->input('page',1);
         $total = $data->count();
         $result = $data->offset(($page - 1 )* $perpage)->limit($perpage)->get(['id','name','email']);
+        $lastpage =  ceil($total/$perpage);
+        if($page > $lastpage)
+        {
+            $result = [
+                'message' => 'Page Extended To its Limit'
+            ];
+        }
         return response()->json([
             'user' => $result,
             'total' => $total,
-            'page' => $page,
-            'last_page' => ceil($total/$perpage)
+            'Current_page' => $page,
+            'last_page' => $lastpage
         ],200);
     }
 
