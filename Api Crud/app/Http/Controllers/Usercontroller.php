@@ -68,8 +68,8 @@ class Usercontroller extends Controller
             'message' =>$validate->errors(),
         ],412);
         }
-        // dd('hello');
-        $imageName = time().'.'.$request->image->extension(); 
+        $imageName = '/storage/public/'.time().'.'.$request->image->extension(); 
+        dd($imageName);
         $request->image->storeAs('public/images/', $imageName);
         $user = User::create([
             'name' => $request->name,
