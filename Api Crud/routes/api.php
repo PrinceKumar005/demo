@@ -16,7 +16,11 @@ use App\Http\Controllers\Usercontroller;
 
 //* <-----------------------This Route get all the User Information That create account ------------------------------>
 
-Route::Get('Getuser',[Usercontroller::class,'index']);
+Route::middleware('auth:api')->group(function () {
+    Route::Get('Getuser',[Usercontroller::class,'index']);
+});
+
+// Route::Get('Getuser',[Usercontroller::class,'index']);
 
 //* <-----------------------This Route Create New User ------------------------------>
 
@@ -41,7 +45,7 @@ Route::middleware('auth:api')->group(function () {
 
 // Route::Get('Delete',[Usercontroller::class,'destroy']);
 Route::middleware('auth:api')->group(function () {
-    Route::Delete('Delete',[Usercontroller::class,'destroy']);
+    Route::Delete('Delete{id}',[Usercontroller::class,'destroy']);
 });
 
 
@@ -59,8 +63,11 @@ Route::fallback(function(){
 });
 
 
-
-
+Route::get('error', function () {
+    return response()->json([
+        'message' => 'Please Check Your Api Key and Try again'
+    ]);
+})->name('login');
 // Route::middleware('auth:api')->group(function () {
 //     Route::get('userinfo',[Icontroller::class,'userinfo']);
 // });

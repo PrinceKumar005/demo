@@ -1,25 +1,29 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace Tests\Feature;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithFaker;
+use Tests\TestCase;
 use App\Models\User;
-use Auth;
-use Validator;
 
-
-class Usercontroller extends Controller
+class ProductTest extends TestCase
 {
     /**
-     * Display a listing of the resource.
+     * A basic feature test example.
      *
-     * @return \Illuminate\Http\Response
+     * @return void
      */
+    public function test_example()
+    {
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+    }
     //* <-----------------------This Route get all the User Information That create account ------------------------------>
     public function index()
     {
-        $data=User::paginate(1);
+        $data=User::get();
         return response()->json([
             'user' => $data
         ],200);
@@ -33,20 +37,6 @@ class Usercontroller extends Controller
 //* <-----------------------This Route Create New User ------------------------------>
     public function create(Request $request)
     {
-        $validate = Validator::make($request->all(), [
-            'name' => 'required|min:5',
-            'email' => 'required|unique:users',
-            'password' => 'required',
-        ],[
-            'name.required' => 'Name is must.',
-            'name.min' => 'Name must have 5 char.',
-        ]);
-        if($validate->fails()){
-        return response()->json([
-            'message' =>$validate->errors(),
-        ]);
-        }
-
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -66,15 +56,6 @@ class Usercontroller extends Controller
 //* <-----------------------This Route Login User and Provide them Api Key ------------------------------>
     public function login(Request $request)
     {
-        $validate = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-        if($validate->fails()){
-        return response()->json([
-            'message' =>$validate->errors(),
-        ]);
-        }
         if(Auth::attempt($request->only('email','password')))
         {
             $user = auth()->user();
@@ -99,17 +80,9 @@ class Usercontroller extends Controller
     public function show($id)
     {
         $data = User::where('id',$id)->get();
-        if(!empty($data))
-        {
-            return response()->json([
-                'user' => $data
-            ],200);
-        }
-        else{
-            return response()->json([
-                'message' => 'User Not Found'
-            ],404);
-        }
+        return response()->json([
+            'user' => $data
+        ],200);
     }
 
     /**
@@ -122,18 +95,10 @@ class Usercontroller extends Controller
     {
         $id = auth()->user()->id;
         $data = User::where('id',$id)->get();
-        if(!empty($data))
-        {
-            return response()->json([
-                'user' => $data,
-                'message' => 'Login User Credentials'
-            ],200);
-        }
-        else{
-            return response()->json([
-                'message' => 'User Not Found'
-            ],404);
-        }
+        return response()->json([
+            'user' => $data,
+            'message' => 'Login User Credentials'
+        ],200);
     }
     
     /**
@@ -148,26 +113,18 @@ class Usercontroller extends Controller
     {
         $id = auth()->user()->id;
         $data = User::where('id',$id);
-        if(!empty($data))
-        {
-            $user = [
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password)
-            ];
-            // $data -> name = $request->name;
-            // $data -> email = $request->email;
-            // $data -> password = Hash::make($request->password);
-            $data -> update($user);
-            return response()->json([
-                'message'=>'User Upated Successful'
-            ],201);
-        }
-        else{
-            return response()->json([
-                'message'=>'User Not Found'
-            ],404);
-        }
+        $user = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password)
+        ];
+        // $data -> name = $request->name;
+        // $data -> email = $request->email;
+        // $data -> password = Hash::make($request->password);
+        $data -> update($user);
+        return response()->json([
+            'message'=>'User Upated Successful'
+        ],201);
     }
     
     /**
@@ -177,20 +134,13 @@ class Usercontroller extends Controller
      * @return \Illuminate\Http\Response
      */
     //* <-----------------------This Route Delete the Selected User ------------------------------>
-    public function destroy($id)
+    public function destroy()
     {
-        // $id = auth()->user()->id;
+        $id = auth()->user()->id;
         $data = User::find($id);
-        if(!empty($data)){
-            $data -> delete();
-            return response()->json([
-                'message'=>'User Deleted Successful'
-            ],200);
-        }
-        else{
-            return response()->json([
-                'message'=>'User Not Found'
-            ],404);
-        }
+        $data -> delete();
+        return response()->json([
+            'message'=>'User Deleted Successful'
+        ],200);
     }
 }
