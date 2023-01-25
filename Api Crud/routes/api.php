@@ -67,7 +67,7 @@ Route::fallback(function(){
 Route::get('error', function () {
     return response()->json([
         'message' => 'Please Check Your Api Key and Try again'
-    ]);
+    ],401);
 })->name('login');
 // Route::middleware('auth:api')->group(function () {
 //     Route::get('userinfo',[Icontroller::class,'userinfo']);

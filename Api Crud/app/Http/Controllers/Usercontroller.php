@@ -8,7 +8,6 @@ use App\Models\User;
 use Auth;
 use Validator;
 
-
 class Usercontroller extends Controller
 {
     /**
@@ -23,20 +22,28 @@ class Usercontroller extends Controller
         $perpage = 5;
         $page = $request->input('page',1);
         $total = $data->count();
-        $result = $data->offset(($page - 1 )* $perpage)->limit($perpage)->get(['id','name','email']);
+        $result = $data->offset(($page - 1 )* $perpage)->limit($perpage)->get(
+            ['id','name','email']
+        );
         $lastpage =  ceil($total/$perpage);
         if($page > $lastpage)
         {
-            $result = [
-                'message' => 'Page Extended To its Limit'
-            ];
+            $result = "No Record Found";
+            return response()->json([
+                'Current_page' => $page,
+                'user' => $result,
+                'total' => $total,
+                'last_page' => $lastpage
+            ],404);
         }
-        return response()->json([
-            'user' => $result,
-            'total' => $total,
-            'Current_page' => $page,
-            'last_page' => $lastpage
-        ],200);
+        else{
+            return response()->json([
+                'Current_page' => $page,
+                'user' => $result,
+                'total' => $total,
+                'last_page' => $lastpage
+            ],200);
+        }
     }
 
     /**
@@ -49,7 +56,7 @@ class Usercontroller extends Controller
     {
         $validate = Validator::make($request->all(), [
             'name' => 'required|min:5',
-            'email' => 'required|unique:users',
+            'email' => 'required|unique:users|email',
             'password' => 'required|min:6',
         ],[
             'name.required' => 'Name is must.',
@@ -58,7 +65,7 @@ class Usercontroller extends Controller
         if($validate->fails()){
         return response()->json([
             'message' =>$validate->errors(),
-        ]);
+        ],412);
         }
 
         $user = User::create([
@@ -68,7 +75,7 @@ class Usercontroller extends Controller
         ]);
         return response()->json([
             'message' =>'User Created Successfully',
-            'user' => $user
+            'user' => $user->orderBy('id','desc')->first()
         ],201);
     }
 
@@ -87,7 +94,7 @@ class Usercontroller extends Controller
         if($validate->fails()){
         return response()->json([
             'message' =>$validate->errors(),
-        ]);
+        ],412);
         }
         if(Auth::attempt($request->only('email','password')))
         {
@@ -175,7 +182,7 @@ class Usercontroller extends Controller
             $data -> update($user);
             return response()->json([
                 'message'=>'User Upated Successful'
-            ],201);
+            ],200);
         }
         else{
             return response()->json([
@@ -199,7 +206,7 @@ class Usercontroller extends Controller
             $data -> delete();
             return response()->json([
                 'message'=>'User Deleted Successful'
-            ],200);
+            ],202);
         }
         else{
             return response()->json([
