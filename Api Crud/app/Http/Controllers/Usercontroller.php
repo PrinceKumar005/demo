@@ -17,11 +17,18 @@ class Usercontroller extends Controller
      * @return \Illuminate\Http\Response
      */
     //* <-----------------------This Route get all the User Information That create account ------------------------------>
-    public function index()
+    public function index(Request $request)
     {
-        $data=User::paginate(1);
+        $data=new User;
+        $perpage = 5;
+        $page = $request->input('page',1);
+        $total = $data->count();
+        $result = $data->offset(($page - 1 )* $perpage)->limit($perpage)->get(['id','name','email']);
         return response()->json([
-            'user' => $data
+            'user' => $result,
+            'total' => $total,
+            'page' => $page,
+            'last_page' => ceil($total/$perpage)
         ],200);
     }
 
@@ -36,7 +43,7 @@ class Usercontroller extends Controller
         $validate = Validator::make($request->all(), [
             'name' => 'required|min:5',
             'email' => 'required|unique:users',
-            'password' => 'required',
+            'password' => 'required|min:6',
         ],[
             'name.required' => 'Name is must.',
             'name.min' => 'Name must have 5 char.',

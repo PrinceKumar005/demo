@@ -43,12 +43,14 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
-        $this->reportable(function (Throwable $e) {
-            // if ($request->is('api/*')) {
-            //     return response()->json([
-            //         'message' => 'Something Went.'
-            //     ], 404);
-            // }
+        // $this->reportable(function (Throwable $e) {
+            
+        // });
+        $this->renderable(function (MethodNotAllowedHttpException $e) {
+            return response()->json([
+                'message' => 'hello'
+            ],405);
         });
+        
     }
 }

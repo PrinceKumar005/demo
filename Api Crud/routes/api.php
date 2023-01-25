@@ -59,10 +59,11 @@ Route::middleware('auth:api')->group(function () {
 //* <-----------------------This Route Is For Error Handling of Wrong Url ----------------------------->
 Route::fallback(function(){
     return response()->json([
-        'message' => 'Page Not Found. Check Your URL and check again'], 404);
+        'message' => 'Page Not Found. Check Your URL and Try again'], 404);
 });
 
 
+//* <-----------------------This Route Is For Error Handling of Wrong Api Key ----------------------------->
 Route::get('error', function () {
     return response()->json([
         'message' => 'Please Check Your Api Key and Try again'
