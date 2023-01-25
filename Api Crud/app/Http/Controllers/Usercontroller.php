@@ -23,7 +23,7 @@ class Usercontroller extends Controller
         $page = $request->input('page',1);
         $total = $data->count();
         $result = $data->offset(($page - 1 )* $perpage)->limit($perpage)->get(
-            ['id','name','email']
+            ['id','name','email','image']
         );
         $lastpage =  ceil($total/$perpage);
         if($page > $lastpage)
@@ -58,6 +58,7 @@ class Usercontroller extends Controller
             'name' => 'required|min:5',
             'email' => 'required|unique:users|email',
             'password' => 'required|min:6',
+            'image' => 'required'
         ],[
             'name.required' => 'Name is must.',
             'name.min' => 'Name must have 5 char.',
@@ -67,11 +68,14 @@ class Usercontroller extends Controller
             'message' =>$validate->errors(),
         ],412);
         }
-
+        // dd('hello');
+        $imageName = time().'.'.$request->image->extension(); 
+        $request->image->storeAs('public/images/', $imageName);
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password)
+            'password' => Hash::make($request->password),
+            'image' => $imageName
         ]);
         return response()->json([
             'message' =>'User Created Successfully',
