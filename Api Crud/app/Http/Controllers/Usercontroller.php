@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
-use Auth;
+use illuminate\Support\Facades\Auth;
+use Laravel\Passport\Passport;
 use Validator;
 
 class Usercontroller extends Controller
@@ -18,12 +19,13 @@ class Usercontroller extends Controller
     //* <-----------------------This Route get all the User Information That create account ------------------------------>
     public function index(Request $request)
     {
-        $data=new User;
+
+        $data=User::where('role','User');
         $perpage = 5;
         $page = $request->input('page',1);
         $total = $data->count();
         $result = $data->offset(($page - 1 )* $perpage)->limit($perpage)->get(
-            ['id','name','email','image']
+            ['id','name','email','image','role']
         );
         $lastpage =  ceil($total/$perpage);
         if($page > $lastpage)
@@ -58,7 +60,6 @@ class Usercontroller extends Controller
             'name' => 'required|min:5',
             'email' => 'required|unique:users|email',
             'password' => 'required|min:6',
-            'image' => 'required'
         ],[
             'name.required' => 'Name is must.',
             'name.min' => 'Name must have 5 char.',
@@ -68,14 +69,12 @@ class Usercontroller extends Controller
             'message' =>$validate->errors(),
         ],412);
         }
-        $imageName = '/storage/public/'.time().'.'.$request->image->extension(); 
-        dd($imageName);
-        $request->image->storeAs('public/images/', $imageName);
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'image' => $imageName
+            // 'role' => $request->role
         ]);
         return response()->json([
             'message' =>'User Created Successfully',
@@ -121,9 +120,9 @@ class Usercontroller extends Controller
      * @return \Illuminate\Http\Response
      */
 //* <-----------------------This Route Show Only Selected User ------------------------------>
-    public function show($id)
+    public function show()
     {
-        $data = User::where('id',$id)->get();
+        $data = User::where('role','admin')->get();
         if(!empty($data))
         {
             return response()->json([
@@ -160,7 +159,7 @@ class Usercontroller extends Controller
             ],404);
         }
     }
-    
+
     /**
      * Update the specified resource in storage.
      *
@@ -194,7 +193,7 @@ class Usercontroller extends Controller
             ],404);
         }
     }
-    
+
     /**
      * Remove the specified resource from storage.
      *
@@ -202,9 +201,9 @@ class Usercontroller extends Controller
      * @return \Illuminate\Http\Response
      */
     //* <-----------------------This Route Delete the Selected User ------------------------------>
-    public function destroy($id)
+    public function destroy()
     {
-        // $id = auth()->user()->id;
+        $id = auth()->user()->id;
         $data = User::find($id);
         if(!empty($data)){
             $data -> delete();
@@ -218,4 +217,18 @@ class Usercontroller extends Controller
             ],404);
         }
     }
+     //* <-----------------------This Route Logout the Current User ------------------------------>
+     public function logout()
+     {
+        $id = auth()->user()->id;
+        Passport::token()->where('user_id',$id)->delete();
+
+        // Auth::logout();
+        // Session::flush();
+
+
+        return response()->json([
+            'Message' => 'User Logout Successful'
+        ],200);
+     }
 }

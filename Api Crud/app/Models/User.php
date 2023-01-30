@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
+use League\CommonMark\Extension\Attributes\Util\AttributesHelper;
 
 class User extends Authenticatable
 {
@@ -21,7 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'image'
+        'role'
     ];
 
     /**
@@ -42,4 +43,16 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    protected function role(): AttributesHelper
+
+    {
+
+        return new AttributesHelper(
+
+            get: fn ($value) =>  ["User", "Admin", "SuperAdmin"][$value],
+
+        );
+
+    }
 }
