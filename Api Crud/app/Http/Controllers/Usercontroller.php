@@ -8,6 +8,7 @@ use App\Models\{
     User,
     Post
 };
+use Illuminate\Support\Facades\Storage;
 use Auth;
 use Validator;
 use Laravel\Passport\Passport;
@@ -175,7 +176,7 @@ class Usercontroller extends Controller
 
 public function upload(Request $request){
     $validate = Validator::make($request->all(), [
-        'title' => 'required',
+        'title' => 'required|unique:posts|min:3',
         'desc' => 'required',
         'image' => 'mimes:png,jpg',
     ]);
@@ -220,7 +221,7 @@ public function upload(Request $request){
             $data =Post::get();
         }
         else{
-            $data = Post::where('user_id',auth()->user()->id)->get();
+            $data = Post::where('user_id',auth()->user()->id)->get(['title','desc','image']);
         }
         return response()->json([
             'message' =>'Success',
@@ -326,6 +327,103 @@ public function upload(Request $request){
                 'message'=>'User Not Found'
             ],404);
         }
+    }
+
+    Public Function updatepost(Request $request,$id)
+    {
+        $user = auth()->user()->id;
+        $data = Post::where('user_id',$user)
+                ->find($id);
+
+        $validate = Validator::make($request->all(), [
+                'title' => 'required|unique:posts|min:3',
+                'desc' => 'required',
+                'image' => 'mimes:png,jpg',
+            ]);
+            if($validate->fails()){
+                return response()->json([
+                    'message' =>$validate->errors(),
+                ],412);
+            }
+            if($request->hasFile('image'))
+             {
+
+                unlink(public_path('storage/images/'.$data->image));
+                $imageName = time().'.'.$request->image->extension();
+                // dd($imageName);
+                $request->image->storeAs('public/images/', $imageName);
+                $post = [
+                    'title' => $request->title,
+                'desc' => $request->desc,
+                'image' => $imageName
+                ];
+                $d=$data->update($post);
+                if($d == 0){
+                    return response()->json([
+                        'message'=>'Post not Available in Your Account'
+                    ],404);
+                }
+                else{
+                    return response()->json([
+                        'message'=>'Post Updated Successful'
+                    ],201);
+                }
+
+            }
+            else{
+                $post = [
+                    'title' => $request->title,
+                    'desc' => $request->desc,
+                ];
+                $d=$data->update($post);
+                if($d == 0)
+                {
+                    return response()->json([
+                        'message'=>'Post not Available in Your Account'
+                    ],404);
+                }
+                else{
+                    return response()->json([
+                        'message'=>'Post Updated Successful'
+                    ],201);
+                }
+            }
+
+    }
+
+    Public Function search(Request $request){
+        $validate = Validator::make($request->all(), [
+            'title' => 'required',
+        ]);
+        if($validate->fails()){
+            return response()->json([
+                'message' =>$validate->errors(),
+            ],412);
+        }
+        $id = auth()->user()->id;
+        if(auth()->user()->role == 'SuperAdmin')
+        {
+            $post = Post::where('title','like','%'.$request->title.'%')->get();
+        }
+        else{
+            $post = Post::where('user_id',$id)
+                    ->where('title','like','%'.$request->title.'%')->get(['title','desc','image']);
+        }
+
+        if($post != null)
+        {
+            return response()->json([
+                'message'=>'Success',
+                'post' => $post
+            ],200);
+        }
+        else{
+            return response()->json([
+                'message'=>'Post Not Found',
+            ],404);
+        }
+
+
     }
 
     /**

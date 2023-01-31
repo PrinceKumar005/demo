@@ -75,7 +75,13 @@ Route::middleware('auth:api')->group(function () {
 
     Route::Get('upload',[Usercontroller::class,'getupload']);
 
+    //* <-----------------------This Route Upload the Image on database------------------------------>
 
+    Route::Post('upload{id}',[Usercontroller::class,'updatepost']);
+
+     //* <-----------------------This Route Search the Image on database------------------------------>
+
+     Route::Post('search',[Usercontroller::class,'search']);
 
 });
 
