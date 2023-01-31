@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
+use App\Models\{
+    User,
+    Post
+};
 use Auth;
 use Validator;
 use Laravel\Passport\Passport;
@@ -76,9 +79,7 @@ class Usercontroller extends Controller
             'message' =>$validate->errors(),
         ],412);
         }
-        // $imageName = time().'.'.$request->image->extension();
-        // // dd($imageName);
-        // $request->image->storeAs('public/images/', $imageName);
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -139,6 +140,7 @@ class Usercontroller extends Controller
             ],200);
         }
         else{
+
             return response()->json([
                 'message' => 'User Not Found'
             ],404);
@@ -167,6 +169,64 @@ class Usercontroller extends Controller
                 'message' => 'User Not Found'
             ],404);
         }
+    }
+
+//* <-----------------------This Route Upload the Image on database------------------------------>
+
+public function upload(Request $request){
+    $validate = Validator::make($request->all(), [
+        'title' => 'required',
+        'desc' => 'required',
+        'image' => 'mimes:png,jpg',
+    ]);
+    if($validate->fails()){
+        return response()->json([
+            'message' =>$validate->errors(),
+        ],412);
+    }
+
+    if($request->hasFile('image'))
+    {
+        $imageName = time().'.'.$request->image->extension();
+        // dd($imageName);
+        $request->image->storeAs('public/images/', $imageName);
+        $post = Post::create([
+            'user_id' => auth()->user()->id,
+            'title' => $request->title,
+            'desc' => $request->desc,
+            'image' => $imageName,
+        ]);
+    }
+    else{
+        $post = Post::create([
+            'user_id' => auth()->user()->id,
+            'title' => $request->title,
+            'desc' => $request->desc,
+        ]);
+    }
+
+        return response()->json([
+            'message' =>'User Created Successfully',
+            'user' => $post->orderBy('id','desc')->first()
+        ],201);
+
+}
+
+//* <-----------------------This Route get all the Images of user from database------------------------------>
+
+    Public Function getupload(){
+        if(auth()->user()->role == 'SuperAdmin')
+        {
+            $data =Post::get();
+        }
+        else{
+            $data = Post::where('user_id',auth()->user()->id)->get();
+        }
+        return response()->json([
+            'message' =>'Success',
+            'user' => $data
+        ],200);
+
     }
 
     /**

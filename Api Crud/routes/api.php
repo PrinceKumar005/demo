@@ -52,24 +52,35 @@ Route::Post('login',[Usercontroller::class,'login']);
 Route::Post('Getuser{id}',[Usercontroller::class,'show']);
 
 
-//* <-----------------------This Route Delete the Active User ------------------------------>
 
 // Route::Get('Delete',[Usercontroller::class,'destroy']);
 Route::middleware('auth:api')->group(function () {
+    //* <-----------------------This Route Delete the Active User ------------------------------>
+
     Route::Delete('Delete',[Usercontroller::class,'destroy']);
-});
 
+    //* <-----------------------This Route Provide The Information Of Login User------------------------------>
 
-//* <-----------------------This Route Provide The Information Of Login User------------------------------>
-
-Route::middleware('auth:api')->group(function () {
     Route::get('userinfo',[Usercontroller::class,'userinfo']);
+
+    //* <-----------------------This Route Logout the Active User  and Delete Their Api's------------------------------>
+
+    Route::Delete('logout',[Usercontroller::class,'logout']);
+
+    //* <-----------------------This Route Upload the Image on database------------------------------>
+
+    Route::Post('upload',[Usercontroller::class,'upload']);
+
+    //* <-----------------------This Route get all the Images of user from database------------------------------>
+
+    Route::Get('upload',[Usercontroller::class,'getupload']);
+
+
+
 });
 
-//* <-----------------------This Route Logout the Active User  and Delete Their Api's------------------------------>
-Route::middleware('auth:api')->group(function () {
-    Route::Delete('logout',[Usercontroller::class,'logout']);
-});
+
+
 
 
 //* <-----------------------This Route Is For Error Handling of Wrong Url ----------------------------->
