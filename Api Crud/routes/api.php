@@ -14,17 +14,34 @@ use App\Http\Controllers\Usercontroller;
 |
 */
 
-//* <-----------------------This Route get all the User Information That create account ------------------------------>
 
-Route::middleware(['auth:api','user-access:admin'])->group(function () {
+Route::group(['middleware'=>['auth:api'],['user-access:Admin,SuperAdmin']],function () {
+
+    //* <-----------------------This Route get all the User Information That create account ------------------------------>
     Route::Get('Getuser',[Usercontroller::class,'index']);
+
+    //* <-----------------------This Route Create New User ------------------------------>
+
+    Route::Post('Create',[Usercontroller::class,'create']);
+
+    //* <-----------------------This Route Update The Existing User Name Email Passsword of Active User ------------------------------>
+
+    Route::Post('update',[Usercontroller::class,'update']);
+
+
 });
 
 // Route::Get('Getuser',[Usercontroller::class,'index']);
+Route::group(['middleware'=>['auth:api'],['user-access:SuperAdmin']],function () {
 
-//* <-----------------------This Route Create New User ------------------------------>
+    //* <-----------------------This Route Update The Existing User Name Email Passsword of Selected User ------------------------------>
 
-Route::Post('Create',[Usercontroller::class,'create']);
+    Route::Post('update{id}',[Usercontroller::class,'updateAdminUser']);
+
+    //* <-----------------------This Route Delete the Active User ------------------------------>
+
+    Route::Delete('DeleteUser{id}',[Usercontroller::class,'destroyAdminUser']);
+});
 
 //* <-----------------------This Route Login User and Provide them Api Key ------------------------------>
 
@@ -34,18 +51,12 @@ Route::Post('login',[Usercontroller::class,'login']);
 
 Route::Post('Getuser{id}',[Usercontroller::class,'show']);
 
-//* <-----------------------This Route Update The Existing User Name Email Passsword of Selected User ------------------------------>
 
-// Route::Post('update{id}',[Usercontroller::class,'update']);
-Route::middleware('auth:api')->group(function () {
-    Route::Put('update',[Usercontroller::class,'update']);
-});
-
-//* <-----------------------This Route Delete the Selected User ------------------------------>
+//* <-----------------------This Route Delete the Active User ------------------------------>
 
 // Route::Get('Delete',[Usercontroller::class,'destroy']);
 Route::middleware('auth:api')->group(function () {
-    Route::Delete('Delete{id}',[Usercontroller::class,'destroy']);
+    Route::Delete('Delete',[Usercontroller::class,'destroy']);
 });
 
 
@@ -53,6 +64,11 @@ Route::middleware('auth:api')->group(function () {
 
 Route::middleware('auth:api')->group(function () {
     Route::get('userinfo',[Usercontroller::class,'userinfo']);
+});
+
+//* <-----------------------This Route Logout the Active User  and Delete Their Api's------------------------------>
+Route::middleware('auth:api')->group(function () {
+    Route::Delete('logout',[Usercontroller::class,'logout']);
 });
 
 

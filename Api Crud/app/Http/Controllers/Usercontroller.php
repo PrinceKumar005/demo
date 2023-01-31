@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use Auth;
 use Validator;
+use Laravel\Passport\Passport;
 
 class Usercontroller extends Controller
 {
@@ -18,12 +19,19 @@ class Usercontroller extends Controller
     //* <-----------------------This Route get all the User Information That create account ------------------------------>
     public function index(Request $request)
     {
-        $data=new User;
+        if(auth()->user()->role == 'SuperAdmin')
+        {
+            $data=new User;
+        }
+        else if(auth()->user()->role == 'Admin'){
+            $data=User::where('role','Admin')
+                ->orWhere('role','User');
+        }
         $perpage = 5;
         $page = $request->input('page',1);
         $total = $data->count();
         $result = $data->offset(($page - 1 )* $perpage)->limit($perpage)->get(
-            ['id','name','email','image','role']
+            ['id','name','email','role']
         );
         $lastpage =  ceil($total/$perpage);
         if($page > $lastpage)
@@ -58,7 +66,7 @@ class Usercontroller extends Controller
             'name' => 'required|min:5',
             'email' => 'required|unique:users|email',
             'password' => 'required|min:6',
-            'image' => 'required'
+            'role' => 'required',
         ],[
             'name.required' => 'Name is must.',
             'name.min' => 'Name must have 5 char.',
@@ -68,14 +76,13 @@ class Usercontroller extends Controller
             'message' =>$validate->errors(),
         ],412);
         }
-        $imageName = time().'.'.$request->image->extension(); 
-        // dd($imageName);
-        $request->image->storeAs('public/images/', $imageName);
+        // $imageName = time().'.'.$request->image->extension();
+        // // dd($imageName);
+        // $request->image->storeAs('public/images/', $imageName);
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'image' => $imageName,
             'role' => $request->role
         ]);
         return response()->json([
@@ -161,7 +168,7 @@ class Usercontroller extends Controller
             ],404);
         }
     }
-    
+
     /**
      * Update the specified resource in storage.
      *
@@ -169,9 +176,23 @@ class Usercontroller extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    //* <-----------------------This Route Update The Existing User Name Email Passsword of Selected User ------------------------------>
+    //* <-----------------------This Route Update The Existing User Name Email Passsword of Active User ------------------------------>
     public function update(Request $request)
     {
+        $validate = Validator::make($request->all(), [
+            'name' => 'required|min:5',
+            'email' => 'required|unique:users|email',
+            'password' => 'required|min:6',
+            'role' => 'required',
+        ],[
+            'name.required' => 'Name is must.',
+            'name.min' => 'Name must have 5 char.',
+        ]);
+        if($validate->fails()){
+            return response()->json([
+                'message' =>$validate->errors(),
+            ],412);
+        }
         $id = auth()->user()->id;
         $data = User::where('id',$id);
         if(!empty($data))
@@ -195,17 +216,68 @@ class Usercontroller extends Controller
             ],404);
         }
     }
-    
+
+    //* <-----------------------This Route Update The Existing User Name Email Passsword of Selected User ------------------------------>
+    public function updateAdminUser(Request $request,$id)
+    {
+
+        $validate = Validator::make($request->all(), [
+            'name' => 'required|min:5',
+            'email' => 'required|unique:users|email',
+            'password' => 'required|min:6',
+            'role' => 'required',
+        ],[
+            'name.required' => 'Name is must.',
+            'name.min' => 'Name must have 5 char.',
+        ]);
+
+        if($validate->fails()){
+            return response()->json([
+                'message' =>$validate->errors(),
+            ],412);
+        }
+        $data = User::find($id);
+        if(!empty($data))
+        {
+            if($data->role == 'SuperAdmin'){
+                return response()->json([
+                    'message'=>'You Dont Have Permission To Update This User'
+                ],401);
+            }
+            else{
+
+                $user = [
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'password' => Hash::make($request->password),
+                    'role' => $request->role
+                ];
+                // $data -> name = $request->name;
+                // $data -> email = $request->email;
+                // $data -> password = Hash::make($request->password);
+                $data -> update($user);
+                return response()->json([
+                    'message'=>'User Upated Successful'
+                ],200);
+            }
+        }
+        else{
+            return response()->json([
+                'message'=>'User Not Found'
+            ],404);
+        }
+    }
+
     /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    //* <-----------------------This Route Delete the Selected User ------------------------------>
-    public function destroy($id)
+    //* <-----------------------This Route Delete the Active User ------------------------------>
+    public function destroy()
     {
-        // $id = auth()->user()->id;
+        $id = auth()->user()->id;
         $data = User::find($id);
         if(!empty($data)){
             $data -> delete();
@@ -219,4 +291,42 @@ class Usercontroller extends Controller
             ],404);
         }
     }
+
+    //* <-----------------------This Route Delete the Selected User ------------------------------>
+    public function destroyAdminUser($id)
+    {
+        // $id = auth()->user()->id;
+        $data = User::find($id);
+        if(!empty($data)){
+            if($data->role == 'SuperAdmin'){
+                return response()->json([
+                    'message'=>'You Dont Have Permission To Delete This User'
+                ],401);
+            }
+            else{
+                $data -> delete();
+                return response()->json([
+                    'message'=>'User Deleted Successful'
+                ],202);
+            }
+        }
+        else{
+            return response()->json([
+                'message'=>'User Not Found'
+            ],404);
+        }
+    }
+
+    //* <-----------------------This Route Logout the Current User ------------------------------>
+    public function logout()
+    {
+       $id = auth()->user()->id;
+       Passport::token()->where('user_id',$id)->delete();
+
+       return response()->json([
+           'Message' => 'User Logout Successful'
+       ],200);
+    }
+
+
 }
