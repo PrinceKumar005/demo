@@ -83,6 +83,9 @@ Route::middleware('auth:api')->group(function () {
 
      Route::Post('search',[Usercontroller::class,'search']);
 
+    //  Route::controller(Usercontroller::class)->group(function(){
+
+    //  });
 });
 
 

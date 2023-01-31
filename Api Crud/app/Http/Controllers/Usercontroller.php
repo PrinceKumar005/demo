@@ -9,9 +9,11 @@ use App\Models\{
     Post
 };
 use Illuminate\Support\Facades\Storage;
-use Auth;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 use Laravel\Passport\Passport;
+use Laravel\Socialite\Facades\Socialite;
+use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class Usercontroller extends Controller
 {
@@ -35,8 +37,23 @@ class Usercontroller extends Controller
         $page = $request->input('page',1);
         $total = $data->count();
         $result = $data->offset(($page - 1 )* $perpage)->limit($perpage)->get(
-            ['id','name','email','role']
+            ['id',
+            'name',
+            'email',
+            'role',
+            'facebook_id'
+            ]
         );
+            foreach($result as $key => $value)
+            {
+                if(empty($result[$key]['facebook_id'])){
+                    $result[$key]['facebook_id'] = "InActive";
+                }
+                else{
+                    $result[$key]['facebook_id'] = "Active";
+                }
+            }
+        // dd($result->facebook_id);
         $lastpage =  ceil($total/$perpage);
         if($page > $lastpage)
         {
@@ -484,6 +501,49 @@ public function upload(Request $request){
        return response()->json([
            'Message' => 'User Logout Successful'
        ],200);
+    }
+
+
+
+
+
+
+    public function redirectToFacebook()
+    {
+        return Socialite::driver('facebook')->redirect();
+    }
+
+    public function handleFacebookCallback()
+    {
+        try {
+
+            $user = Socialite::driver('facebook')->user();
+
+            // dd($user);
+
+            $finduser = User::where('facebook_id', $user->id)->first();
+
+            if($finduser){
+
+                Auth::login($finduser);
+
+                return redirect()->intended('/');
+
+            }else{
+                $newUser = User::updateOrCreate(['email' => $user->email],[
+                        'name' => $user->name,
+                        'facebook_id'=> $user->id,
+                        'password' => Hash::make('123456')
+                    ]);
+
+                Auth::login($newUser);
+
+                return redirect()->intended('/');
+            }
+
+        } catch (Exception $e) {
+            dd($e->getMessage());
+        }
     }
 
 
