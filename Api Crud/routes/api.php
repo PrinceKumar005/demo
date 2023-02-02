@@ -2,7 +2,10 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Usercontroller;
+use App\Http\Controllers\{
+    Usercontroller,
+    Postcontroller
+};
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -69,19 +72,19 @@ Route::middleware('auth:api')->group(function () {
 
     //* <-----------------------This Route Upload the Image on database------------------------------>
 
-    Route::Post('upload',[Usercontroller::class,'upload']);
+    Route::Post('upload',[Postcontroller::class,'upload']);
 
     //* <-----------------------This Route get all the Images of user from database------------------------------>
 
-    Route::Get('upload',[Usercontroller::class,'getupload']);
+    Route::Get('upload',[Postcontroller::class,'getupload']);
 
     //* <-----------------------This Route Upload the Image on database------------------------------>
 
-    Route::Post('upload{id}',[Usercontroller::class,'updatepost']);
+    Route::Post('upload{id}',[Postcontroller::class,'updatepost']);
 
      //* <-----------------------This Route Search the Image on database------------------------------>
 
-     Route::Post('search',[Usercontroller::class,'search']);
+     Route::Post('search',[Postcontroller::class,'search']);
 
     //  Route::controller(Usercontroller::class)->group(function(){
 

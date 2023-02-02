@@ -4,15 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use App\Models\{
-    User,
-    Post
-};
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 use Laravel\Passport\Passport;
-use Laravel\Socialite\Facades\Socialite;
-use Exception;
 use Illuminate\Support\Facades\Auth;
 
 class Usercontroller extends Controller
@@ -188,65 +182,6 @@ class Usercontroller extends Controller
             ],404);
         }
     }
-
-//* <-----------------------This Route Upload the Image on database------------------------------>
-
-public function upload(Request $request){
-    $validate = Validator::make($request->all(), [
-        'title' => 'required|unique:posts|min:3',
-        'desc' => 'required',
-        'image' => 'mimes:png,jpg',
-    ]);
-    if($validate->fails()){
-        return response()->json([
-            'message' =>$validate->errors(),
-        ],412);
-    }
-
-    if($request->hasFile('image'))
-    {
-        $imageName = time().'.'.$request->image->extension();
-        // dd($imageName);
-        $request->image->storeAs('public/images/', $imageName);
-        $post = Post::create([
-            'user_id' => auth()->user()->id,
-            'title' => $request->title,
-            'desc' => $request->desc,
-            'image' => $imageName,
-        ]);
-    }
-    else{
-        $post = Post::create([
-            'user_id' => auth()->user()->id,
-            'title' => $request->title,
-            'desc' => $request->desc,
-        ]);
-    }
-
-        return response()->json([
-            'message' =>'User Created Successfully',
-            'user' => $post->orderBy('id','desc')->first()
-        ],201);
-
-}
-
-//* <-----------------------This Route get all the Images of user from database------------------------------>
-
-    Public Function getupload(){
-        if(auth()->user()->role == 'SuperAdmin')
-        {
-            $data =Post::get();
-        }
-        else{
-            $data = Post::where('user_id',auth()->user()->id)->get(['title','desc','image']);
-        }
-        return response()->json([
-            'message' =>'Success',
-            'user' => $data
-        ],200);
-
-    }
-
     /**
      * Update the specified resource in storage.
      *
@@ -346,103 +281,6 @@ public function upload(Request $request){
         }
     }
 
-    Public Function updatepost(Request $request,$id)
-    {
-        $user = auth()->user()->id;
-        $data = Post::where('user_id',$user)
-                ->find($id);
-
-        $validate = Validator::make($request->all(), [
-                'title' => 'required|unique:posts|min:3',
-                'desc' => 'required',
-                'image' => 'mimes:png,jpg',
-            ]);
-            if($validate->fails()){
-                return response()->json([
-                    'message' =>$validate->errors(),
-                ],412);
-            }
-            if($request->hasFile('image'))
-             {
-
-                unlink(public_path('storage/images/'.$data->image));
-                $imageName = time().'.'.$request->image->extension();
-                // dd($imageName);
-                $request->image->storeAs('public/images/', $imageName);
-                $post = [
-                    'title' => $request->title,
-                'desc' => $request->desc,
-                'image' => $imageName
-                ];
-                $d=$data->update($post);
-                if($d == 0){
-                    return response()->json([
-                        'message'=>'Post not Available in Your Account'
-                    ],404);
-                }
-                else{
-                    return response()->json([
-                        'message'=>'Post Updated Successful'
-                    ],201);
-                }
-
-            }
-            else{
-                $post = [
-                    'title' => $request->title,
-                    'desc' => $request->desc,
-                ];
-                $d=$data->update($post);
-                if($d == 0)
-                {
-                    return response()->json([
-                        'message'=>'Post not Available in Your Account'
-                    ],404);
-                }
-                else{
-                    return response()->json([
-                        'message'=>'Post Updated Successful'
-                    ],201);
-                }
-            }
-
-    }
-
-    Public Function search(Request $request){
-        $validate = Validator::make($request->all(), [
-            'title' => 'required',
-        ]);
-        if($validate->fails()){
-            return response()->json([
-                'message' =>$validate->errors(),
-            ],412);
-        }
-        $id = auth()->user()->id;
-        if(auth()->user()->role == 'SuperAdmin')
-        {
-            $post = Post::where('title','like','%'.$request->title.'%')->get();
-        }
-        else{
-            $post = Post::where('user_id',$id)
-                    ->where('title','like','%'.$request->title.'%')->get(['title','desc','image']);
-        }
-
-        if($post != null)
-        {
-            return response()->json([
-                'message'=>'Success',
-                'post' => $post
-            ],200);
-        }
-        else{
-            return response()->json([
-                'message'=>'Post Not Found',
-            ],404);
-        }
-
-
-    }
-
     /**
      * Remove the specified resource from storage.
      *
@@ -502,49 +340,5 @@ public function upload(Request $request){
            'Message' => 'User Logout Successful'
        ],200);
     }
-
-
-
-
-
-
-    public function redirectToFacebook()
-    {
-        return Socialite::driver('facebook')->redirect();
-    }
-
-    public function handleFacebookCallback()
-    {
-        try {
-
-            $user = Socialite::driver('facebook')->user();
-
-            // dd($user);
-
-            $finduser = User::where('facebook_id', $user->id)->first();
-
-            if($finduser){
-
-                Auth::login($finduser);
-
-                return redirect()->intended('/');
-
-            }else{
-                $newUser = User::updateOrCreate(['email' => $user->email],[
-                        'name' => $user->name,
-                        'facebook_id'=> $user->id,
-                        'password' => Hash::make('123456')
-                    ]);
-
-                Auth::login($newUser);
-
-                return redirect()->intended('/');
-            }
-
-        } catch (Exception $e) {
-            dd($e->getMessage());
-        }
-    }
-
 
 }
